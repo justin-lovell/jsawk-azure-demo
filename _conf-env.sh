@@ -19,5 +19,6 @@ sudo mv jsawk /usr/bin/
 
 
 
-echo '[]' | jsawk 'return this.length'
+echo | jsawk 'return "this works"'
+
 
