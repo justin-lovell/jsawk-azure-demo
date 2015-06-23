@@ -1,20 +1,21 @@
 #!/bin/sh
+
 # Set variable values based on parameters passed
-azureloginuname="$1" # Azure AD login ID
-azureloginpass="$2" # Azure AD password
-azuresubname="$3" # Azure subscription name
-azureregion="$4" # Azure datacenter region
-azureprefix="$5" # Unique prefix for Azure resource names
-azurevmuname="$6" # Admin username for new VMs
-azurevmpass="$7" # Admin password for new VMs
-azurevmtotal="$8" # Number of VMs to provision
-azurecloudinit="$9" # Cloud-Init config file
+azureloginuname="$1"
+azureloginpass="$2"
+azuresubname="$3"
+azureregion="$4"
+azureprefix="$5"
+azurevmuname="$6"
+azurevmpass="$7"
+azurevmtotal="$8"
+azurecloudinit="$9"
 
 
 ##############################
 # Sign-in to Azure account with Azure AD credentials
  
-azure login --user "$azureloginuname" --password "$azureloginpass"
+azure login --username "$azureloginuname" --password "$azureloginpass"
  
 # Confirm that Azure account sign-in was successful
  
@@ -30,11 +31,11 @@ azure account set "$azuresubname"
  
 # Confirm that subscription is now default
  
-azuresubdefault=$(azure account show --json "$azuresubname" | jsawk 'return this.isDefault')
-if [ "$azuresubdefault" != "true" ]; then
-    echo "Error: Azure subscription ${azuresubdefault} not found as default subscription"
-    exit 1
-fi
+#azuresubdefault=$(azure account show --json "$azuresubname" | jsawk 'return this.isDefault')
+#if [ "$azuresubdefault" != "true" ]; then
+#    echo "Error: Azure subscription ${azuresubdefault} not found as default subscription"
+#    exit 1
+#fi
 
 
 #################################
@@ -56,7 +57,7 @@ fi
 # Create Azure storage account
  
 azurestoragename="${azureprefix}stor"
-azure storage account create --affinity-group "$azureagname" --label "$azurestoragename" --geoReplication "$azurestoragename"
+azure storage account create --affinity-group "$azureagname" --label "$azurestoragename" --type GRS "$azurestoragename"
  
 # Confirm that Azure storage account exists
  
@@ -86,8 +87,9 @@ fi
 ##############################
 # Select Linux VM image 
  
-azurevmimage=$(azure vm image list --json | jsawk -n 'out(this.name)' -q "[?name=\"*Ubuntu-14_04_1-LTS-amd64-server*\"]" | sort | tail -n 1)
- 
+azurevmimage=$(azure vm image list --json | jsawk -n 'out(this.name)' -q "[?name=\"*Ubuntu-14_04_2-LTS-amd64-server*\"]" | sort | tail -n 1)
+azurevmimage="${azurevmimage#OUT:  }"
+
 # Confirm that valid Linux VM Image is selected
  
 if [ "$azurevmimage" = "" ]; then
@@ -99,13 +101,13 @@ fi
 ##############################
 # Set variables for provisioning Linux VMs
  
-azurednsname="${azureprefix}app" # DNS hostname for Cloud Service
-azurevmsize='Small' # Azure VM instance size
-azureavailabilityset="${azureprefix}as" # Availability Set name
-azureendpointport='80' # Port to Load-balance
-azureendpointprot='tcp' # Protocol to Load-balance
-azureendpointdsr='false' # Direct Server Return, usually false
-azureloadbalanceset="${azureprefix}lb" # Load-balanced Set name
+azurednsname="${azureprefix}app"
+azurevmsize='Small'
+azureavailabilityset="${azureprefix}as"
+azureendpointport='80'
+azureendpointprot='tcp'
+azureendpointdsr='false'
+azureloadbalanceset="${azureprefix}lb"
 
 
 
@@ -150,6 +152,7 @@ do
     do
         sleep 30s
         azurevmstatus=$(azure vm show --json --dns-name "$azurednsname" "$azurevmname" | jsawk 'return this.InstanceStatus')
+        azurevmstatus="${azurevmstatus#OUT:  }"
         echo "Provisioning: ${azurevmname} status is ${azurevmstatus}"
     done
  
@@ -163,21 +166,3 @@ done
  
 echo "Success: Azure provisioning for ${azurednsname} completed"
 azure logout "$azureloginuname"
-
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-
